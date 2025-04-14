@@ -1,84 +1,92 @@
 import 'package:flutter/material.dart';
-import '../services/meal_service.dart';
 import '../models/meal_model.dart';
+import '../services/meal_service.dart';
 import 'meal_detail_screen.dart';
 
-class MealListScreen extends StatelessWidget {
-  final MealService mealService = MealService();
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late Future<List<Meal>> futureMeals;
+  List<Meal> favoriteMeals = [];
+
+  @override
+  void initState() {
+    super.initState();
+    futureMeals = MealService.fetchMeals();
+  }
+
+  void toggleFavorite(Meal meal) {
+    setState(() {
+      if (favoriteMeals.contains(meal)) {
+        favoriteMeals.remove(meal);
+      } else {
+        favoriteMeals.add(meal);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("🍽️ All Meals"),
-        centerTitle: true,
-        backgroundColor: Colors.deepOrange,
+        title: const Text('Meals'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.favorite),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder:
+                      (_) => MealDetailScreen(
+                        meals: favoriteMeals,
+                        title: 'Favorite Meals',
+                      ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<List<Meal>>(
-        future: mealService.fetchMeals(),
+        future: futureMeals,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting)
-            return Center(child: CircularProgressIndicator());
-          else if (snapshot.hasError)
-            return Center(child: Text('Error loading meals'));
-          else {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else {
             final meals = snapshot.data!;
-            return GridView.builder(
-              padding: EdgeInsets.all(10),
+            return ListView.builder(
               itemCount: meals.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 3 / 4,
-              ),
               itemBuilder: (context, index) {
                 final meal = meals[index];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MealDetailScreen(meal: meal),
-                      ),
-                    );
-                  },
-                  child: Card(
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                return ListTile(
+                  leading: Image.network(meal.imageUrl, width: 50),
+                  title: Text(meal.name),
+                  trailing: IconButton(
+                    icon: Icon(
+                      favoriteMeals.contains(meal)
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color: Colors.red,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(15),
-                            ),
-                            child: Image.network(meal.image, fit: BoxFit.cover),
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                meal.name,
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                meal.area,
-                                style: TextStyle(color: Colors.grey[600]),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                    onPressed: () => toggleFavorite(meal),
                   ),
+                  onTap:
+                      () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder:
+                              (_) => MealDetailScreen(
+                                meals: [meal],
+                                title: meal.name,
+                              ),
+                        ),
+                      ),
                 );
               },
             );
