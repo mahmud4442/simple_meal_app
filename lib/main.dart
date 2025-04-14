@@ -61,6 +61,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'Simple Meal App',
       theme: ThemeData(primarySwatch: Colors.orange),
+      debugShowCheckedModeBanner: false, // Add because of debug option remove
       initialRoute: '/',
       routes: {
         '/':
