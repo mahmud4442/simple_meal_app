@@ -1,12 +1,12 @@
 class Meal {
   final String id;
-  final String name;
+  final String title;
   final String imageUrl;
   final String instructions;
 
   Meal({
     required this.id,
-    required this.name,
+    required this.title,
     required this.imageUrl,
     required this.instructions,
   });
@@ -14,7 +14,7 @@ class Meal {
   factory Meal.fromJson(Map<String, dynamic> json) {
     return Meal(
       id: json['idMeal'],
-      name: json['strMeal'],
+      title: json['strMeal'],
       imageUrl: json['strMealThumb'],
       instructions: json['strInstructions'] ?? '',
     );
